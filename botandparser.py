@@ -29,7 +29,7 @@ bot = ChatBot(
         },
         {
             'import_path': 'chatterbot.logic.LowConfidenceAdapter',
-            'threshold': 0.45,
+            'threshold': 0.1,
             'default_response': 'I am sorry, but I do not understand.'
         },
 	# o import nao está a ir ao sitio certo
@@ -44,7 +44,7 @@ bot = ChatBot(
 bot.set_trainer(ChatterBotCorpusTrainer)
 
 bot.train(
-    "chatterbot.corpus.english.greetings",
+    #"chatterbot.corpus.english.greetings",
     #"chatterbot.corpus.english.conversations",
     #"chatterbot.corpus.english.emotion",
     #"chatterbot.corpus.english.gossip",
@@ -59,7 +59,7 @@ conn = sqlite3.connect('database.sqlite3.db')
 c = conn.cursor()
 #------------------------- iCalc Parser Domain ----------------------------------
 
-user = raw_input("Hello Mr/Miss?")
+user = input("Hello Mr/Miss?")
 c.execute('SELECT * FROM UsersTable WHERE Name=?', (user,))
 loggeduser = c.fetchone()
 
@@ -67,7 +67,7 @@ loggeduser = c.fetchone()
 
 if(isinstance(loggeduser, NoneType)):
 	c.execute('INSERT INTO UsersTable VALUES (NULL,?)', (user,))
-	url = raw_input("Enter iCalender link: ")
+	url = input("Enter iCalender link: ")
 
 	#urllib.request.urlretrieve(url, "test.ics")
 	testfile = urllib.URLopener()
