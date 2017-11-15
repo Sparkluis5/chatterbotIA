@@ -13,7 +13,7 @@ class CalenderLogicAdapter(LogicAdapter):
 		super(CalenderLogicAdapter, self).__init__(**kwargs)
 
 	def can_process(self, statement):
-    		words = ['what', 'classes', 'today']
+    		words = ['what', 'classes', 'today']  # 'deliverables', 'practical', 'theoretical', 'defense', 'evaluation', 'exam', 'registered'  
     		if all(x in statement.text.split() for x in words):
         		return True
     		else:
