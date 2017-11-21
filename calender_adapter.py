@@ -13,7 +13,7 @@ class CalenderLogicAdapter(LogicAdapter):
 	def __init__(self,**kwargs):
 		self.logger = kwargs.get('logger', logging.getLogger(__name__))
 		self.questions = ["what","where","when","who"]
-		self.types = ['classes','class', 'delivery','deliveries', 'practical', 'theoretical', 'defenses', 'defense', 'evaluation','evaluations', 'exams', 'exams' ]
+		self.types = ['classes','class', 'delivery','deliveries', 'practical', 'theoretical', 'defenses', 'defense', 'evaluation','evaluations', 'exams', 'exams' ,"day"]
 		self.frames = ['today', 'tomorrow', "yesterday"]
 		super(CalenderLogicAdapter, self).__init__(**kwargs)
 
@@ -55,6 +55,14 @@ class CalenderLogicAdapter(LogicAdapter):
 				if "today" in fa:
 					events = self.make_statement_from_select(self.get_today_classes(),3)
 					stm = "Today you have "+events
+					response = Statement(stm)
+					response.confidence = 1
+					return response
+			if "day" in ta:
+				if "today" in fa:
+					events = datetime.datetime.now()
+					events = events.strftime("%A %d. %B %Y")
+					stm = "Today it is "+events
 					response = Statement(stm)
 					response.confidence = 1
 					return response
