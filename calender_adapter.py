@@ -17,18 +17,15 @@ class CalenderLogicAdapter(LogicAdapter):
 
 	def can_process(self, statement):
 		return True
-    		#words = ['what', 'classes', 'today'] #[today,exams,...]
-    		#if all(x in statement.text.split() for x in words):
-        		#return True
-    		#else:
-        		#return False
 
 	def process(self, statement): #introduzir logica de trantamento de informação
 		#if(exams in statement) -> get_exams()
+		statement = str(statement).lower()
 		fields = ['classes','deliverables','practicals','theoreticals','defense','evaluation','exam']
 		temporals = ['today','tomorrow']
 		field = []
 		temporal = []
+		statem = ''
 
 		statetokens = word_tokenize(str(statement))
 		#taggedtokens = nltk.pos_tag(words)
@@ -45,8 +42,14 @@ class CalenderLogicAdapter(LogicAdapter):
 		
 		print(str(len(field)) +'\n'+ str(len(temporal)))
 		if((len(field) > 1) or (len(temporal) > 1)):
-			#parse the fie
-			print('too big')
+			if('and' in statetokens):
+				for f in field:
+					for t in temporal:
+						fetchedevents = self.get_specific_classes(field,temporal)
+						statem = statem + 'This are the ' + ' '.join(field) + ' you have ' + ''.join(temporal) + ':'+'\n'.join(str(v) for v in fetchedevents)
+						response = Statement(statem)
+						response.confidence = 1
+        					return response
 		else:
 			if('classes' in field):
 				if('today' in temporal):
@@ -72,18 +75,48 @@ class CalenderLogicAdapter(LogicAdapter):
 					response.confidence = 1
         				return response				
 
-			if(field == 'deliverables'):
-				fetchedevents = self.get_specific_classes(field,temporal)
-			if(field == 'practical'):
-				fetchedevents = self.get_specific_classes(field,temporal)
-			if(field == 'theoretical'):
-				fetchedevents = self.get_specific_classes(field,temporal)
-			if(field == 'defense'):
-				fetchedevents = self.get_specific_classes(field,temporal)
-			if(field == 'evaluation'):
-				fetchedevents = self.get_specific_classes(field,temporal)
-			if(field == 'exam'): 
-				fetchedevents = self.get_specific_classes(field,temporal)
+			if('deliverables' in field):
+				dateformated = ''.join(temporal)
+				fetchedevents = self.get_specific_classes(field,dateformated)
+				statem = statem + 'This are the ' + ' '.join(field) + ' you have ' + ''.join(temporal) + ':'+'\n'.join(str(v) for v in fetchedevents)
+				response = Statement(statem)
+				response.confidence = 1
+        			return response	
+			if('practical' in field):
+				dateformated = ''.join(temporal)
+				fetchedevents = self.get_specific_classes(field,dateformated)
+				statem = statem + 'This are the ' + ' '.join(field) + ' you have ' + ''.join(temporal) + ':'+'\n'.join(str(v) for v in fetchedevents)
+				response = Statement(statem)
+				response.confidence = 1
+        			return response	
+			if('theoretical' in field):
+				dateformated = ''.join(temporal)
+				fetchedevents = self.get_specific_classes(field,dateformated)
+				statem = statem + 'This are the ' + ' '.join(field) + ' you have ' + ''.join(temporal) + ':'+'\n'.join(str(v) for v in fetchedevents)
+				response = Statement(statem)
+				response.confidence = 1
+        			return response	
+			if('defense' in field):
+				dateformated = ''.join(temporal)
+				fetchedevents = self.get_specific_classes(field,dateformated)
+				statem = statem + 'This are the ' + ' '.join(field) + ' you have ' + ''.join(temporal) + ':'+'\n'.join(str(v) for v in fetchedevents)
+				response = Statement(statem)
+				response.confidence = 1
+        			return response	
+			if('evaluation' in field):
+				dateformated = ''.join(temporal)
+				fetchedevents = self.get_specific_classes(field,dateformated)
+				statem = statem + 'This are the ' + ' '.join(field) + ' you have ' + ''.join(temporal) + ':'+'\n'.join(str(v) for v in fetchedevents)
+				response = Statement(statem)
+				response.confidence = 1
+        			return response	
+			if('exam' in field): 
+				dateformated = ''.join(temporal)
+				fetchedevents = self.get_specific_classes(field,dateformated)
+				statem = statem + 'This are the ' + ' '.join(field) + ' you have ' + ''.join(temporal) + ':'+'\n'.join(str(v) for v in fetchedevents)
+				response = Statement(statem)
+				response.confidence = 1
+        			return response	
 
 
 	def get_today_classes(self):
@@ -104,15 +137,17 @@ class CalenderLogicAdapter(LogicAdapter):
 
 
 	def get_specific_classes(self, parameter,date):
-		if(date == 'today'):
+		dateformated = ''.join(date)
+		parameterformated = ''.join(parameter)
+		if(dateformated == 'today'):
 			i = datetime.datetime.now()
-		if(date == 'tomorrow'):
+		if(dateformated == 'tomorrow'):
 			i = datetime.datetime.now() + datetime.timedelta(days=1)
 		else:
-			i = parse(date)
+			i = parse(dateformated)
 			
 		j = i + datetime.timedelta(days=1)
-		c.execute("SELECT * FROM EventsTable WHERE StartDate >= date(?) AND StartDate < date(?) AND Parameter LIKE ?", (i,j,'%'+parameter+'%'))
+		c.execute("SELECT * FROM EventsTable WHERE StartDate >= date(?) AND StartDate < date(?) AND Description LIKE ?", (i,j,'%'+parameterformated+'%'))
 		eventfetch = c.fetchall()
 
 		return eventfetch
