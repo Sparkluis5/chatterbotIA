@@ -61,9 +61,8 @@ class CalenderLogicAdapter(LogicAdapter):
 					for j in range(0,len(temporal)):
 						temporalsend = ''.join(temporal[j])
 						fieldsend = ''.join(field[i])
-						fetchedevents = self.get_specific_classes(fieldsend,temporalsend)
-						statem = statem + self.statement_parsing(fetchedevents)
-						statem = statem + 'This are the ' + ' '.join(field) + ' you have ' + ''.join(temporal) + ':'+'\n'.join(str(v) for v in fetchedevents)
+							 = self.get_specific_classes(fieldsend,temporalsend)
+						statem = statem + self.statement_parsing(fetchedevents) + '\n'
 						
 				response = Statement(statem)
 				response.confidence = 1
@@ -286,8 +285,12 @@ class CalenderLogicAdapter(LogicAdapter):
 	def statement_parsing(self, qresult):
 		beg = 'This is what i got:'
 		addst = ''
+		if(len(qresult) == 0):
+			addst = 'I wasnt able to find Anything'
+			return addst
+			
 		for i in range(0,len(qresult)):
-			addst = addst + '\n' + qresult[i][2] + '\n' + qresult[i][3] + '\n' + qresult[i][4] + '\n' + qresult[i][5]
+			addst = addst + '\n' + qresult[i][2] + '\nStartDate:' + qresult[i][3] + '\nEndDate:' + qresult[i][4] + '\n' + qresult[i][5]
 
 		return beg + addst
 
@@ -312,4 +315,6 @@ class CalenderLogicAdapter(LogicAdapter):
 		#self.logger.info("hjdkjshdkjh") 
 		#self.logger.info("-------------------------------------~~~~~~~~~~~~~~~~~~~~~~~~~~~~") 
 		return form_string
+
+
 
