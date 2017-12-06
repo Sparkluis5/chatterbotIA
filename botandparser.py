@@ -10,6 +10,8 @@ import logging
 import urllib
 import sys
 import sqlite3
+import sys
+
 
 # Só corre em Python 3.4
 # -------------------------- Chatterbot Domain --------------------------------------------
@@ -29,7 +31,7 @@ bot = ChatBot(
         },
         {
             'import_path': 'chatterbot.logic.LowConfidenceAdapter',
-            'threshold': 0.45,
+            'threshold': 1,
             'default_response': 'I am sorry, but I do not understand.'
         },
 	# o import nao está a ir ao sitio certo
@@ -44,7 +46,7 @@ bot = ChatBot(
 bot.set_trainer(ChatterBotCorpusTrainer)
 
 bot.train(
-    "chatterbot.corpus.english.greetings",
+    #"chatterbot.corpus.english.greetings",
     #"chatterbot.corpus.english.conversations",
     #"chatterbot.corpus.english.emotion",
     #"chatterbot.corpus.english.gossip",
@@ -58,8 +60,8 @@ NoneType = type(None)
 conn = sqlite3.connect('database.sqlite3.db')
 c = conn.cursor()
 #------------------------- iCalc Parser Domain ----------------------------------
-
 user = raw_input("Hello Mr/Miss?")
+c.execute('CREATE TABLE IF NOT EXISTS UsersTable (name,value)')
 c.execute('SELECT * FROM UsersTable WHERE Name=?', (user,))
 loggeduser = c.fetchone()
 
@@ -87,29 +89,31 @@ if(isinstance(loggeduser, NoneType)):
 	for component in gcal.walk():
 		if component.name == "VEVENT":
 			#----------------------------Guardar na BD em vez de lista ----------------------------
-			print('EVENT PROCESSING')
+			#print('EVENT PROCESSING')
 			summarylist.append(component.get('summary'))	
-			print(component.get('summary'))
+			#print(component.get('summary'))
 			dstartlist.append(component.get('dtstart').dt)
-			print(component.get('dtstart').dt)
+			#print(component.get('dtstart').dt)
 			if(isinstance(component.get('dtend'), NoneType)):
-				print("None")
+				#print("None")
 				dtendlist.append("None")
 			else:
 				dtendlist.append(component.get('dtend').dt)
-				print(component.get('dtend').dt)
+				#print(component.get('dtend').dt)
 			dtstamplist.append(component.get('dtstamp').dt)		
-			print(component.get('dtstamp').dt)
+			#print(component.get('dtstamp').dt)
 			descriptionlist.append(component.get('description'))
-			print(component.get('description'))
+			#print(component.get('description'))
 			userlist.append(user)
-			print("END EVENT PROCESSING")
+			#print("END EVENT PROCESSING")
 			ncontrol += 1
 	g.close()
+	print("Processing finished")
 	
 	#print(ncontrol)
 
 	infotuple = zip(userlist,summarylist,dstartlist,dtendlist,descriptionlist)	
+	c.execute('CREATE TABLE IF NOT EXISTS EventsTable (name,value1,value2,val3,val4,val5)')
 	c.executemany('INSERT INTO EventsTable VALUES (NULL,?,?,?,?,?)', infotuple)
 
 	#print(infotuple)

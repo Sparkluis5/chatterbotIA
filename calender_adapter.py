@@ -41,10 +41,10 @@ class CalenderLogicAdapter(LogicAdapter):
 				dateparse = parse(token)
 				temporal.append(token)
 
-		if((len(field) == 0) or (len(temporal) == 0))	:
+		if((len(field) == 0) or (len(temporal) == 0))   :
 			response = Statement('Sorry didnt understand')
 			response.confidence = 0
-        		return response
+			return response
 
 		for name in names: 
 			last_first = HumanName(name).first
@@ -56,17 +56,26 @@ class CalenderLogicAdapter(LogicAdapter):
 		print(temporal)
 #-------------------------------------------------MultipleInputs----------------------------------------------------------------------------
 		if((len(field) > 1) or (len(temporal) > 1)):
-			if(('and' in statetokens) or ('or' in statetokens) or ('with' in statetokens)):
+			if(('or' in statetokens) or ('with' in statetokens)):
 				for i in range(0,len(field)):
 					for j in range(0,len(temporal)):
 						temporalsend = ''.join(temporal[j])
 						fieldsend = ''.join(field[i])
-							 = self.get_specific_classes(fieldsend,temporalsend)
+						fetchedevents = self.get_specific_classes(fieldsend,temporalsend)
 						statem = statem + self.statement_parsing(fetchedevents) + '\n'
-						
 				response = Statement(statem)
 				response.confidence = 1
-        			return response
+				return response
+			elif ('and' in statetokens):
+				for i in range(0,len(field)):
+					for j in range(0,len(temporal)):
+						temporalsend = ''.join(temporal[j])
+						fieldsend = ''.join(field[i])
+						fetchedevents.append(self.get_specific_classes(fieldsend,temporalsend))
+				statem = make_statement_from_select(fetchedevents,2)
+				response = Statement(statem)
+				response.confidence = 1
+				return response
 			else:
 				if(len(classes) > 0):
 					for j in range(0,len(temporal)):
@@ -78,11 +87,11 @@ class CalenderLogicAdapter(LogicAdapter):
 						
 						response = Statement(statem)
 						response.confidence = 1
-        					return response
+						return response
 				else:
 					response = Statement('Im not understanding your question very much, please reformulate it')
 					response.confidence = 1
-        				return response
+					return response
 #-------------------------------------------------------------------------------------------------------------------------------------------
 
 #----------------------------------------------Single Inputs, need better modularization----------------------------------------------------
@@ -109,7 +118,7 @@ class CalenderLogicAdapter(LogicAdapter):
 					statem = self.statement_parsing(fetchedevents)
 					response = Statement(statem)
 					response.confidence = 1
-        				return response
+					return response
 				if('today' in temporal):
 					i = datetime.datetime.now()
 					fetchedevents = self.get_specifictime_classes(i)
@@ -117,7 +126,7 @@ class CalenderLogicAdapter(LogicAdapter):
 					#statem = 'This are the classes you have today:'+'\n'.join(str(v) for v in fetchedevents)
 					response = Statement(statem)
 					response.confidence = 1
-        				return response
+					return response
 				if('tomorrow' in temporal):
 					i = datetime.datetime.now() + datetime.timedelta(days=1)
 					fetchedevents = self.get_specifictime_classes(i)
@@ -125,7 +134,7 @@ class CalenderLogicAdapter(LogicAdapter):
 					statem = self.statement_parsing(fetchedevents)
 					response = Statement(statem)
 					response.confidence = 1
-        				return response
+					return response
 				else:
 					dateformated = ''.join(temporal)
 					datefind = parse(dateformated)
@@ -133,7 +142,7 @@ class CalenderLogicAdapter(LogicAdapter):
 					statem = self.statement_parsing(fetchedevents)
 					response = Statement(statem)
 					response.confidence = 1
-        				return response				
+					return response             
 
 			if('deliverables' in field):
 				dateformated = ''.join(temporal)
@@ -141,46 +150,46 @@ class CalenderLogicAdapter(LogicAdapter):
 				statem = statem + self.statement_parsing(fetchedevents)
 				response = Statement(statem)
 				response.confidence = 1
-        			return response	
+				return response 
 			if('practical' in field):
 				dateformated = ''.join(temporal)
 				fetchedevents = self.get_specific_classes(field,dateformated)
 				statem = statem + self.statement_parsing(fetchedevents)
 				response = Statement(statem)
 				response.confidence = 1
-        			return response	
+				return response 
 			if('theoretical' in field):
 				dateformated = ''.join(temporal)
 				fetchedevents = self.get_specific_classes(field,dateformated)
 				statem = statem + self.statement_parsing(fetchedevents)
 				response = Statement(statem)
 				response.confidence = 1
-        			return response	
+				return response 
 			if('defense' in field):
 				dateformated = ''.join(temporal)
 				fetchedevents = self.get_specific_classes(field,dateformated)
 				statem = statem + self.statement_parsing(fetchedevents)
 				response = Statement(statem)
 				response.confidence = 1
-        			return response	
+				return response 
 			if('evaluation' in field):
 				dateformated = ''.join(temporal)
 				fetchedevents = self.get_specific_classes(field,dateformated)
 				statem = statem + self.statement_parsing(fetchedevents)
 				response = Statement(statem)
 				response.confidence = 1
-        			return response	
+				return response 
 			if('exame' in field): 
 				dateformated = ''.join(temporal)
 				fetchedevents = self.get_specific_classes(field,dateformated)
 				statem = statem + self.statement_parsing(fetchedevents)
 				response = Statement(statem)
 				response.confidence = 1
-        			return response	
+				return response 
 
 			response = Statement('Im dont understand very much, please reformulate the question friend')
 			response.confidence = 0
-        		return response	
+			return response 
 
 
 	def get_today_classes(self):
@@ -247,31 +256,31 @@ class CalenderLogicAdapter(LogicAdapter):
 		return eventfetch
 
 	def is_date(self,string):
-    		try: 
-        		parse(string)
-        		return True
-    		except ValueError:
-        		return False
+			try: 
+				parse(string)
+				return True
+			except ValueError:
+				return False
 
 	def get_human_names(self,text):
 		tokens = nltk.tokenize.word_tokenize(text)
 		pos = nltk.pos_tag(tokens)
-    		sentt = nltk.ne_chunk(pos, binary = False)
-    		person_list = []
-    		person = []
-    		name = ""
-    		for subtree in sentt.subtrees(filter=lambda t: t.label() == 'PERSON'):
-        		for leaf in subtree.leaves():
-            			person.append(leaf[0])
-        		if len(person) > 1: #avoid grabbing lone surnames
-            			for part in person:
-                			name += part + ' '
-            			if name[:-1] not in person_list:
-                			person_list.append(name[:-1])
-            			name = ''
-        		person = []
+		sentt = nltk.ne_chunk(pos, binary = False)
+		person_list = []
+		person = []
+		name = ""
+		for subtree in sentt.subtrees(filter=lambda t: t.label() == 'PERSON'):
+			for leaf in subtree.leaves():
+					person.append(leaf[0])
+			if len(person) > 1: #avoid grabbing lone surnames
+					for part in person:
+						name += part + ' '
+					if name[:-1] not in person_list:
+						person_list.append(name[:-1])
+					name = ''
+			person = []
 
-    		return (person_list)	
+		return (person_list)    
 
 	def get_classes_names(self, text):
 		classes_list = []
