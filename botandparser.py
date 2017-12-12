@@ -11,12 +11,13 @@ import urllib
 import sys
 import sqlite3
 import sys
+import unicodedata#novo import
 
 
 # Só corre em Python 3.4
 # -------------------------- Chatterbot Domain --------------------------------------------
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 bot = ChatBot(
     'Helper',
@@ -25,19 +26,20 @@ bot = ChatBot(
     input_adapter='chatterbot.input.TerminalAdapter',
     output_adapter='chatterbot.output.TerminalAdapter',
     logic_adapters=[
-        'chatterbot.logic.MathematicalEvaluation',
-	{
-            'import_path': 'chatterbot.logic.BestMatch'
-        },
-        {
-            'import_path': 'chatterbot.logic.LowConfidenceAdapter',
-            'threshold': 1,
-            'default_response': 'I am sorry, but I do not understand.'
-        },
+        'chatterbot.logic.MathematicalEvaluation',        
 	# o import nao está a ir ao sitio certo
 	{
-	    'import_path': 'calender_adapter.CalenderLogicAdapter'
+	    'import_path': 'calender_adapter.CalenderLogicAdapter',
+	    'threshold': 0.5
 	},
+	{
+        'import_path': 'chatterbot.logic.LowConfidenceAdapter',
+        'threshold': 0.5,
+        'default_response': 'I am sorry, but I do not understand.'
+    },
+	{
+        'import_path': 'chatterbot.logic.BestMatch'
+    },
 	'chatterbot.logic.TimeLogicAdapter',	
     ],
     database='./database.sqlite3'
@@ -102,7 +104,7 @@ if(isinstance(loggeduser, NoneType)):
 				#print(component.get('dtend').dt)
 			dtstamplist.append(component.get('dtstamp').dt)		
 			#print(component.get('dtstamp').dt)
-			descriptionlist.append(component.get('description'))
+			descriptionlist.append(unicodedata.normalize('NFD', component.get('description')).encode('ascii', 'ignore'))#adicionei tornar tudo em ascii
 			#print(component.get('description'))
 			userlist.append(user)
 			#print("END EVENT PROCESSING")

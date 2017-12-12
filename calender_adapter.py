@@ -21,7 +21,7 @@ class CalenderLogicAdapter(LogicAdapter):
 
 	def process(self, statement): #introduzir logica de trantamento de informação
 		#statement = str(statement).lower()
-		fields = ['classes','deliverables','practicals','theoreticals','defense','evaluation','exame','Aula']
+		fields = ['classes','class','deliverables','practicals','theoreticals','defense','evaluation','exame','aula']
 		temporals = ['today','tomorrow','next']
 		field = []
 		temporal = []
@@ -31,52 +31,78 @@ class CalenderLogicAdapter(LogicAdapter):
 		names = self.get_human_names(str(statement))
 		classes = self.get_classes_names(str(statement))
 		#taggedtokens = nltk.pos_tag(words)
-
+		
+		#adicionei tirar capitalizacoes
+		for i in range(len(statetokens)):
+			statetokens[i] = statetokens[i].lower()
+		#adicionei converter a portugues
 		for token in statetokens:
 			if(token in fields):
-				field.append(token)
+				if (token == 'classes' or token == 'class' or token == 'aula'):
+					field.append('Aula')
+				else:
+					field.append(token)
 			if(token in temporals):
 				temporal.append(token)
 			if(self.is_date(token)):
 				dateparse = parse(token)
 				temporal.append(token)
 
+		print(field)
+		print(temporal)
+
 		if((len(field) == 0) or (len(temporal) == 0))   :
 			response = Statement('Sorry didnt understand')
 			response.confidence = 0
 			return response
 
+		#print('names:')
+		#print(names)
 		for name in names: 
+			#print('name:')
+			#print(name)
 			last_first = HumanName(name).first
 			field.append(last_first)
 		
-		field = field + classes
+		#field = field + classes
 
-		print(field)
-		print(temporal)
+		
+		saved=[]
+		k=0
+		INFORMATIONGIVEN = 1  #1 para escrever so nome e sala
 #-------------------------------------------------MultipleInputs----------------------------------------------------------------------------
 		if((len(field) > 1) or (len(temporal) > 1)):
-			if(('or' in statetokens) or ('with' in statetokens)):
+			if(('or' in statetokens) or ('and' in statetokens)):
 				for i in range(0,len(field)):
 					for j in range(0,len(temporal)):
 						temporalsend = ''.join(temporal[j])
 						fieldsend = ''.join(field[i])
-						fetchedevents = self.get_specific_classes(fieldsend,temporalsend)
-						statem = statem + self.statement_parsing(fetchedevents) + '\n'
+						statem = statem + self.make_statement_from_select(self.get_specific_classes(fieldsend,temporalsend),INFORMATIONGIVEN)
+				statem = 'You have:' + statem
 				response = Statement(statem)
 				response.confidence = 1
 				return response
-			elif ('and' in statetokens):
+			elif(('with' in statetokens)):
 				for i in range(0,len(field)):
 					for j in range(0,len(temporal)):
 						temporalsend = ''.join(temporal[j])
 						fieldsend = ''.join(field[i])
-						fetchedevents.append(self.get_specific_classes(fieldsend,temporalsend))
-				statem = make_statement_from_select(fetchedevents,2)
+						help = self.get_specific_classes(fieldsend,temporalsend)
+						rets=[]
+						if k==0:
+							saved = help
+							k=k+1
+						else:
+							for term in help:
+								if (term in saved):
+									rets.append(term)
+				print('rets:')
+				print(rets)
+				statem = 'You have:' + self.make_statement_from_select(rets,INFORMATIONGIVEN)
 				response = Statement(statem)
 				response.confidence = 1
 				return response
-			else:
+			else:#ESTA PARTE NAO FAZ NADA??????
 				if(len(classes) > 0):
 					for j in range(0,len(temporal)):
 						for i in range(0,len(classes)):
@@ -90,48 +116,16 @@ class CalenderLogicAdapter(LogicAdapter):
 						return response
 				else:
 					response = Statement('Im not understanding your question very much, please reformulate it')
-					response.confidence = 1
+					response.confidence = 0
 					return response
 #-------------------------------------------------------------------------------------------------------------------------------------------
 
 #----------------------------------------------Single Inputs, need better modularization----------------------------------------------------
 		else:
-			if('classes' in field):
+			if('Aula' in field):
 				if('next' in temporal):
-					dates = []
-					datesparser = []
-					fulldates = []
-					i = datetime.datetime.now()
-					j = datetime.datetime.now() + datetime.timedelta(days=1)
-					c.execute('SELECT StartDate FROM EventsTable WHERE StartDate > date(?)', (i,))
-					eventfetch = c.fetchall()
-					for x in eventfetch: 
-						dates.append(''.join(x))
-					for date in dates:
-						datesparser.append(parse(date))
-					for datet in datesparser:
-						fulldates.append(datet.replace(tzinfo=None))
-					datefind = min(fulldates, key=lambda d: abs(d - i))
-					senddate = str(datefind)+ '+00:00'
-					c.execute('SELECT * FROM EventsTable WHERE StartDate == (?)', (senddate,))
-					datefetch = c.fetchall()
-					statem = self.statement_parsing(fetchedevents)
-					response = Statement(statem)
-					response.confidence = 1
-					return response
-				if('today' in temporal):
-					i = datetime.datetime.now()
-					fetchedevents = self.get_specifictime_classes(i)
-					statem = self.statement_parsing(fetchedevents)
-					#statem = 'This are the classes you have today:'+'\n'.join(str(v) for v in fetchedevents)
-					response = Statement(statem)
-					response.confidence = 1
-					return response
-				if('tomorrow' in temporal):
-					i = datetime.datetime.now() + datetime.timedelta(days=1)
-					fetchedevents = self.get_specifictime_classes(i)
-
-					statem = self.statement_parsing(fetchedevents)
+					statem = self.make_statement_from_select(self.get_next_classes(),INFORMATIONGIVEN)
+					statem = 'Next, you have:' +statem
 					response = Statement(statem)
 					response.confidence = 1
 					return response
@@ -270,6 +264,8 @@ class CalenderLogicAdapter(LogicAdapter):
 		person = []
 		name = ""
 		for subtree in sentt.subtrees(filter=lambda t: t.label() == 'PERSON'):
+			#print('HUMAN NAMES:::')
+			#print(subtree)
 			for leaf in subtree.leaves():
 					person.append(leaf[0])
 			if len(person) > 1: #avoid grabbing lone surnames
