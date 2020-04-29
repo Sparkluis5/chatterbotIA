@@ -1,0 +1,14 @@
+# chatbotAI/botandparser.py: 5,6,7,8
+# chatbotAI/calender_adapter.py: 2,3
+chatterbot == 1.0.5
+
+# chatbotAI/botandparser.py: 2
+icalendar == 4.0.5
+
+# chatbotAI/calender_adapter.py: 8
+# chatbotAI/langtest.py: 3
+nameparser == 1.0.6
+
+# chatbotAI/calender_adapter.py: 7,11
+# chatbotAI/langtest.py: 2
+nltk == 3.5
