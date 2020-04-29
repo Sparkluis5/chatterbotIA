@@ -9,9 +9,12 @@ from nameparser.parser import HumanName
 import sqlite3
 import datetime
 import nltk
+
+#Connection to Database for data retrieval
 conn = sqlite3.connect('database.sqlite3.db')
 c = conn.cursor()
 
+#Calender Logic Adapter module, responsible for calender events responses
 class CalenderLogicAdapter(LogicAdapter):
 	def __init__(self,**kwargs):
 		super(CalenderLogicAdapter, self).__init__(**kwargs)
@@ -19,8 +22,9 @@ class CalenderLogicAdapter(LogicAdapter):
 	def can_process(self, statement):
 		return True
 
-	def process(self, statement): #introduzir logica de trantamento de informação
-		#statement = str(statement).lower()
+	def process(self, statement):
+		#Question process function
+		statement = str(statement).lower()
 		fields = ['classes','class','deliverables','practicals','theoreticals','defense','evaluation','exame','aula']
 		temporals = ['today','tomorrow','next']
 		field = []
@@ -30,12 +34,11 @@ class CalenderLogicAdapter(LogicAdapter):
 		statetokens = word_tokenize(str(statement))
 		names = self.get_human_names(str(statement))
 		classes = self.get_classes_names(str(statement))
-		#taggedtokens = nltk.pos_tag(words)
-		
-		#adicionei tirar capitalizacoes
+
+		#remove capitalizations
 		for i in range(len(statetokens)):
 			statetokens[i] = statetokens[i].lower()
-		#adicionei converter a portugues
+		#Portuguese converter
 		for token in statetokens:
 			if(token in fields):
 				if (token == 'classes' or token == 'class' or token == 'aula'):
@@ -56,21 +59,17 @@ class CalenderLogicAdapter(LogicAdapter):
 			response.confidence = 0
 			return response
 
-		#print('names:')
-		#print(names)
-		for name in names: 
-			#print('name:')
-			#print(name)
+		for name in names:
 			last_first = HumanName(name).first
 			field.append(last_first)
-		
-		#field = field + classes
 
 		
 		saved=[]
 		k=0
-		INFORMATIONGIVEN = 1  #1 para escrever so nome e sala
+		INFORMATIONGIVEN = 1
 #-------------------------------------------------MultipleInputs----------------------------------------------------------------------------
+		#Section for understanding if there are more than one intention
+		#Based on a if else tree based on the detection of intents
 		if((len(field) > 1) or (len(temporal) > 1)):
 			if(('or' in statetokens) or ('and' in statetokens)):
 				for i in range(0,len(field)):
@@ -96,13 +95,11 @@ class CalenderLogicAdapter(LogicAdapter):
 							for term in help:
 								if (term in saved):
 									rets.append(term)
-				print('rets:')
-				print(rets)
 				statem = 'You have:' + self.make_statement_from_select(rets,INFORMATIONGIVEN)
 				response = Statement(statem)
 				response.confidence = 1
 				return response
-			else:#ESTA PARTE NAO FAZ NADA??????
+			else:
 				if(len(classes) > 0):
 					for j in range(0,len(temporal)):
 						for i in range(0,len(classes)):
@@ -122,6 +119,7 @@ class CalenderLogicAdapter(LogicAdapter):
 
 #----------------------------------------------Single Inputs, need better modularization----------------------------------------------------
 		else:
+			#Informal decision tree creation
 			if('Aula' in field):
 				if('next' in temporal):
 					statem = self.make_statement_from_select(self.get_next_classes(),INFORMATIONGIVEN)
@@ -185,7 +183,7 @@ class CalenderLogicAdapter(LogicAdapter):
 			response.confidence = 0
 			return response 
 
-
+	#Aux functions for DB retrieval, name is indication of their purpose
 	def get_today_classes(self):
 		i = datetime.datetime.now()
 		j = datetime.datetime.now() + datetime.timedelta(days=1)
@@ -264,8 +262,6 @@ class CalenderLogicAdapter(LogicAdapter):
 		person = []
 		name = ""
 		for subtree in sentt.subtrees(filter=lambda t: t.label() == 'PERSON'):
-			#print('HUMAN NAMES:::')
-			#print(subtree)
 			for leaf in subtree.leaves():
 					person.append(leaf[0])
 			if len(person) > 1: #avoid grabbing lone surnames
@@ -299,6 +295,7 @@ class CalenderLogicAdapter(LogicAdapter):
 
 		return beg + addst
 
+	#Answer formulation function
 	def make_statement_from_select(self,func,depth):
 		fetchedevents = func
 		form_string="\n"
@@ -316,9 +313,6 @@ class CalenderLogicAdapter(LogicAdapter):
 					if (depth > 2):
 						form_string+= "  additional info "
 			form_string+= "\n"
-		#self.logger.info("-------------------------------------~~~~~~~~~~~~~~~~~~~~~~~~~~~~") 
-		#self.logger.info("hjdkjshdkjh") 
-		#self.logger.info("-------------------------------------~~~~~~~~~~~~~~~~~~~~~~~~~~~~") 
 		return form_string
 
 

@@ -11,14 +11,15 @@ import urllib
 import sys
 import sqlite3
 import sys
-import unicodedata#novo import
+import unicodedata
 
-
-# Só corre em Python 3.4
+# Available only for Python 3.4 and above
 # -------------------------- Chatterbot Domain --------------------------------------------
 
+#Logging for debug purpose
 logging.basicConfig(level=logging.DEBUG)
 
+#Chatterbor Bot creation, defining our SQL DB and connection to Logic Adapter script
 bot = ChatBot(
     'Helper',
     response_selection_method=get_random_response,
@@ -26,8 +27,7 @@ bot = ChatBot(
     input_adapter='chatterbot.input.TerminalAdapter',
     output_adapter='chatterbot.output.TerminalAdapter',
     logic_adapters=[
-        'chatterbot.logic.MathematicalEvaluation',        
-	# o import nao está a ir ao sitio certo
+        'chatterbot.logic.MathematicalEvaluation',
 	{
 	    'import_path': 'calender_adapter.CalenderLogicAdapter',
 	    'threshold': 0.5
@@ -45,30 +45,33 @@ bot = ChatBot(
     database='./database.sqlite3'
 )
 
+
+#Training Bot
 bot.set_trainer(ChatterBotCorpusTrainer)
 
 bot.train(
-    #"chatterbot.corpus.english.greetings",
-    #"chatterbot.corpus.english.conversations",
-    #"chatterbot.corpus.english.emotion",
-    #"chatterbot.corpus.english.gossip",
-    #"chatterbot.corpus.english.humor",
-    #"chatterbot.corpus.english.psychology",
-    #"chatterbot.corpus.english.trivia",
+    "chatterbot.corpus.english.greetings",
+    "chatterbot.corpus.english.conversations",
+    "chatterbot.corpus.english.emotion",
+    "chatterbot.corpus.english.gossip",
+    "chatterbot.corpus.english.humor",
+    "chatterbot.corpus.english.psychology",
+    "chatterbot.corpus.english.trivia",
 )
 
-
+#SQL database connection
 NoneType = type(None)
 conn = sqlite3.connect('database.sqlite3.db')
 c = conn.cursor()
+
 #------------------------- iCalc Parser Domain ----------------------------------
+#User recognition input, checks DB for existing user, if not creates a new one
 user = raw_input("Hello Mr/Miss?")
 c.execute('CREATE TABLE IF NOT EXISTS UsersTable (name,value)')
 c.execute('SELECT * FROM UsersTable WHERE Name=?', (user,))
 loggeduser = c.fetchone()
 
-#print(loggeduser)
-
+#New user needs iCalc link to update DB (Based on University of Coimbra platform Inforestudante calender link
 if(isinstance(loggeduser, NoneType)):
 	c.execute('INSERT INTO UsersTable VALUES (NULL,?)', (user,))
 	url = raw_input("Enter iCalender link: ")
@@ -77,6 +80,7 @@ if(isinstance(loggeduser, NoneType)):
 	testfile = urllib.URLopener()
 	testfile.retrieve(url, 'test.ics')
 
+	#Aux variables
 	summarylist = []
 	dstartlist = []
 	dtendlist = []
@@ -86,49 +90,45 @@ if(isinstance(loggeduser, NoneType)):
  
 	ncontrol = 0
 
+	#Parsing through the calender file for event extraction
 	g = open("test.ics",'rb')
 	gcal = Calendar.from_ical(g.read())
 	for component in gcal.walk():
 		if component.name == "VEVENT":
 			#----------------------------Guardar na BD em vez de lista ----------------------------
-			#print('EVENT PROCESSING')
+			print('EVENT PROCESSING')
 			summarylist.append(component.get('summary'))	
-			#print(component.get('summary'))
 			dstartlist.append(component.get('dtstart').dt)
-			#print(component.get('dtstart').dt)
 			if(isinstance(component.get('dtend'), NoneType)):
-				#print("None")
 				dtendlist.append("None")
 			else:
 				dtendlist.append(component.get('dtend').dt)
-				#print(component.get('dtend').dt)
-			dtstamplist.append(component.get('dtstamp').dt)		
-			#print(component.get('dtstamp').dt)
+			dtstamplist.append(component.get('dtstamp').dt)
 			descriptionlist.append(unicodedata.normalize('NFD', component.get('description')).encode('ascii', 'ignore'))#adicionei tornar tudo em ascii
-			#print(component.get('description'))
 			userlist.append(user)
-			#print("END EVENT PROCESSING")
+			print("END EVENT PROCESSING")
 			ncontrol += 1
 	g.close()
 	print("Processing finished")
 	
 	#print(ncontrol)
 
+	#Data insertion into SQL DB
 	infotuple = zip(userlist,summarylist,dstartlist,dtendlist,descriptionlist)	
 	c.execute('CREATE TABLE IF NOT EXISTS EventsTable (name,value1,value2,val3,val4,val5)')
 	c.executemany('INSERT INTO EventsTable VALUES (NULL,?,?,?,?,?)', infotuple)
 
-	#print(infotuple)
 	conn.commit()
 
 else:
 	print('Hello ' +user) 
 # -------------------------- Chatterbot Domain --------------------------------------------
+#Bot interaction section
 print("WELCOME TO YOUR PERSONAL HELPER PLEASE SAY HI TO HIM")
 
 while True:
     try:
-     bot_input = bot.get_response(None)
+     	bot_input = bot.get_response(None)
 
     except(KeyboardInterrupt, EOFError, SystemExit):
         break

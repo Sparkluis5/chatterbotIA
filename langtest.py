@@ -2,6 +2,7 @@
 import nltk
 from nameparser.parser import HumanName
 
+#Auxiliary function for human names and surnames detection
 def get_human_names(text):
     tokens = nltk.tokenize.word_tokenize(text)
     pos = nltk.pos_tag(tokens)
@@ -22,11 +23,5 @@ def get_human_names(text):
 
     return (person_list)
 
-text = "The is what Diogo Henrique"
 
-names = get_human_names(text)
-print "LAST, FIRST"
-for name in names: 
-	last_first = HumanName(name).first
-	print last_first
 
