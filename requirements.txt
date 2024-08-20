@@ -11,4 +11,4 @@ nameparser == 1.0.6
 
 # chatbotAI/calender_adapter.py: 7,11
 # chatbotAI/langtest.py: 2
-nltk == 3.5
+nltk == 3.9
